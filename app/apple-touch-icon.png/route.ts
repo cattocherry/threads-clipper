@@ -63,20 +63,45 @@ function drawIcon() {
     }
   }
 
+  function ellipse(
+    cx: number,
+    cy: number,
+    rx: number,
+    ry: number,
+    rotation: number,
+    thickness: number,
+    color: [number, number, number, number]
+  ) {
+    const radians = (rotation * Math.PI) / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    let previous: [number, number] | null = null;
+    for (let step = 0; step <= 96; step += 1) {
+      const theta = (step / 96) * Math.PI * 2;
+      const x = rx * Math.cos(theta);
+      const y = ry * Math.sin(theta);
+      const next: [number, number] = [Math.round(cx + x * cos - y * sin), Math.round(cy + x * sin + y * cos)];
+      if (previous) line(previous[0], previous[1], next[0], next[1], thickness, color);
+      previous = next;
+    }
+  }
+
   for (let y = 0; y < SIZE; y += 1) {
     data[y * (SIZE * 4 + 1)] = 0;
   }
 
   fillRect(0, 0, SIZE, SIZE, [20, 21, 24, 255]);
-  line(41, 63, 139, 63, 5, [242, 241, 237, 255]);
-  line(90, 63, 90, 88, 5, [242, 241, 237, 255]);
-  line(54, 63, 54, 106, 5, [242, 241, 237, 255]);
-  line(126, 63, 126, 116, 5, [242, 241, 237, 255]);
-  fillCircle(90, 95, 16, [245, 197, 24, 255]);
-  fillCircle(54, 113, 21, [242, 241, 237, 255]);
-  fillCircle(54, 113, 15, [20, 21, 24, 255]);
-  fillCircle(126, 123, 25, [139, 142, 148, 255]);
-  fillCircle(126, 123, 19, [20, 21, 24, 255]);
+  line(37, 69, 73, 57, 3, [242, 241, 237, 255]);
+  line(73, 57, 112, 57, 3, [242, 241, 237, 255]);
+  line(112, 57, 146, 70, 3, [242, 241, 237, 255]);
+  line(88, 52, 101, 105, 2, [139, 142, 148, 255]);
+  line(56, 65, 47, 116, 2, [139, 142, 148, 255]);
+  line(132, 70, 146, 126, 2, [139, 142, 148, 255]);
+  line(37, 120, 83, 128, 2, [139, 142, 148, 255]);
+  line(123, 131, 168, 138, 2, [139, 142, 148, 255]);
+  fillCircle(103, 109, 11, [245, 197, 24, 255]);
+  ellipse(47, 124, 24, 13, -13, 2, [242, 241, 237, 255]);
+  ellipse(150, 139, 30, 16, 9, 2, [139, 142, 148, 255]);
 
   return data;
 }

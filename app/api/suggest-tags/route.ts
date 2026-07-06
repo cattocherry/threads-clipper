@@ -44,8 +44,7 @@ function fallbackTags(text: string, existingTags: string[]) {
     .filter(([pattern]) => (pattern as RegExp).test(text))
     .map(([, tag]) => tag as string);
 
-  const tags = Array.from(new Set([...reused, ...inferred])).slice(0, 3);
-  return tags.length ? tags : ["읽을거리"];
+  return Array.from(new Set([...reused, ...inferred])).slice(0, 3);
 }
 
 export async function POST(request: Request) {
@@ -61,8 +60,9 @@ export async function POST(request: Request) {
     const message = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 200,
+      temperature: 0.3,
       system:
-        "당신은 아카이브 태그 분류기다. 주어진 글에 맞는 한국어 태그를 1~3개 제안한다. 기존 태그 목록에서 맞는 것이 있으면 반드시 그것을 우선 재사용하고, 정말 없을 때만 새 태그를 만든다. 태그는 2~6자 명사형. JSON 문자열 배열만 출력하고 다른 텍스트는 절대 포함하지 마라.",
+        "당신은 아카이브 태그 분류기다. 본문이 실제로 다루는 주제만 한국어 태그로 0~3개 제안한다. 확신이 없으면 개수를 줄여라. 장소·인물은 글의 주제일 때만 태그화하고 단순 언급은 제외한다. 기존 태그 목록에서 맞는 것이 있으면 반드시 그것을 우선 재사용하고, 정말 없을 때만 새 태그를 만든다. 태그는 2~6자 명사형. JSON 문자열 배열만 출력하고 다른 텍스트는 절대 포함하지 마라.",
       messages: [
         {
           role: "user",

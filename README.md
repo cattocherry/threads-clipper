@@ -30,3 +30,5 @@ ANTHROPIC_API_KEY=...
 ## Vercel 배포
 
 Vercel 프로젝트 환경변수에 `ANTHROPIC_API_KEY`를 설정하면 `/api/suggest-tags`가 활성화됩니다. 사용자 아카이브 데이터는 Vercel이나 Upstash에 저장되지 않습니다.
+
+Framework Preset은 Next.js를 사용합니다.

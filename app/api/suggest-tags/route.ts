@@ -22,12 +22,39 @@ function parseTags(text: string) {
   }
 }
 
+function fallbackTags(text: string, existingTags: string[]) {
+  const normalized = text.toLowerCase();
+  const reused = existingTags
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag) => normalized.includes(tag.toLowerCase()));
+
+  const inferred = [
+    [/만화|웹툰|그림|일러스트|image|comic|toon/i, "만화"],
+    [/글쓰기|작법|문장|소설|writing|story/i, "글쓰기"],
+    [/개발|코딩|프로그래밍|코드|developer|code|programming/i, "개발"],
+    [/디자인|브랜드|ui|ux|design/i, "디자인"],
+    [/음악|노래|앨범|music|song/i, "음악"],
+    [/영화|드라마|애니|movie|film|anime/i, "영상"],
+    [/책|독서|서평|book|reading/i, "책"],
+    [/여행|공간|카페|travel|place/i, "장소"],
+    [/뉴스|정치|사회|news/i, "뉴스"],
+    [/ai|인공지능|claude|chatgpt|openai/i, "AI"]
+  ]
+    .filter(([pattern]) => (pattern as RegExp).test(text))
+    .map(([, tag]) => tag as string);
+
+  const tags = Array.from(new Set([...reused, ...inferred])).slice(0, 3);
+  return tags.length ? tags : ["읽을거리"];
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { text?: string; existingTags?: string[] };
     const text = body.text?.trim() ?? "";
+    const existingTags = body.existingTags ?? [];
     if (!text || !process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ tags: [] });
+      return NextResponse.json({ tags: text ? fallbackTags(text, existingTags) : [] });
     }
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -41,7 +68,7 @@ export async function POST(request: Request) {
           role: "user",
           content: JSON.stringify({
             text,
-            existingTags: body.existingTags ?? []
+            existingTags
           })
         }
       ]
@@ -50,7 +77,8 @@ export async function POST(request: Request) {
     const output = message.content
       .map((part) => (part.type === "text" ? part.text : ""))
       .join("");
-    return NextResponse.json({ tags: parseTags(output) });
+    const tags = parseTags(output);
+    return NextResponse.json({ tags: tags.length ? tags : fallbackTags(text, existingTags) });
   } catch {
     return NextResponse.json({ tags: [] });
   }

@@ -105,6 +105,14 @@ export async function confirmTags(id: string, tags: string[]) {
   await refreshTagCounts();
 }
 
+export async function restoreItem(item: ArchiveItem) {
+  await db.items.put({
+    ...item,
+    tags: uniqueTags(item.tags)
+  });
+  await refreshTagCounts();
+}
+
 export async function getInboxItems() {
   return (await db.items.filter((item) => !item.isClassified).toArray()).sort((a, b) => b.savedAt - a.savedAt);
 }

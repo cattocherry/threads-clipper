@@ -92,18 +92,21 @@ function initialFor(item: ArchiveItem) {
 
 function MobileMark({ animated = false, className = "" }: { animated?: boolean; className?: string }) {
   return (
-    <svg className={`${animated ? "mobile-balance" : ""} ${className}`} viewBox="0 0 188 112" aria-hidden="true">
+    <svg className={`${animated ? "mobile-balance" : ""} ${className}`} viewBox="0 0 260 150" aria-hidden="true">
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M24 34c37-18 78-19 138 1" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M92 25c-3 18 1 34 12 48" stroke="var(--bone-dim)" strokeWidth="1.1" />
-        <path d="M50 30c-11 16-14 31-9 46" stroke="currentColor" strokeWidth="1.1" />
-        <path d="M145 36c10 13 14 27 11 43" stroke="currentColor" strokeWidth="1.1" />
-        <path d="M38 76c13-7 28-6 43 3" stroke="var(--bone-dim)" strokeWidth="1.2" />
-        <path d="M123 80c17-8 33-7 48 4" stroke="var(--bone-dim)" strokeWidth="1.2" />
+        <path d="M100 46c43-24 91-29 143-12" stroke="var(--bone-dim)" strokeWidth="2.4" strokeDasharray="10 13" opacity="0.72" />
+        <path d="M31 41c33 0 57 12 75 33" stroke="var(--calder)" strokeWidth="1.5" opacity="0.9" />
+        <path d="M83 97c37-29 80-35 130-20" stroke="var(--calder-blue)" strokeWidth="1.5" opacity="0.95" />
+        <path d="M116 83c28 11 57 10 86-1" stroke="var(--bone)" strokeWidth="1.35" opacity="0.82" />
+        <path d="M105 74c8 12 17 21 28 27" stroke="var(--bone-dim)" strokeWidth="1.2" opacity="0.75" />
+        <path d="M199 82c-17 8-30 21-40 41" stroke="var(--bone-dim)" strokeWidth="1.2" opacity="0.75" />
       </g>
-      <circle cx="104" cy="76" r="8.5" fill="var(--calder)" />
-      <ellipse cx="42" cy="83" rx="17" ry="10" fill="none" stroke="currentColor" strokeWidth="1.4" transform="rotate(-13 42 83)" />
-      <ellipse cx="158" cy="88" rx="24" ry="13" fill="none" stroke="var(--bone-dim)" strokeWidth="1.4" transform="rotate(9 158 88)" />
+      <circle cx="31" cy="41" r="18" fill="var(--calder)" />
+      <circle cx="83" cy="97" r="17" fill="var(--calder-blue)" />
+      <circle cx="212" cy="78" r="19" fill="var(--bone)" />
+      <circle cx="106" cy="74" r="4.2" fill="none" stroke="var(--bone)" strokeWidth="1.2" opacity="0.86" />
+      <circle cx="134" cy="101" r="4.2" fill="none" stroke="var(--bone)" strokeWidth="1.2" opacity="0.72" />
+      <circle cx="201" cy="82" r="4.2" fill="none" stroke="var(--bone)" strokeWidth="1.2" opacity="0.72" />
     </svg>
   );
 }
@@ -113,15 +116,16 @@ function ThumbnailFallback({ item }: { item: ArchiveItem }) {
   const left = 12 + (hash % 18);
   const mid = 36 + ((hash >> 3) % 16);
   const right = 62 + ((hash >> 6) % 18);
-  const tilt = (hash % 19) - 9;
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--graphite-700)]">
       <svg className="absolute inset-0 h-full w-full opacity-85" viewBox="0 0 96 96" aria-hidden="true">
-        <path d={`M${left} 24 C${mid} 13 ${right} 18 86 29`} fill="none" stroke="var(--bone-dim)" strokeWidth="1.2" strokeLinecap="round" />
-        <path d={`M${mid} 22 C${mid - 5} 34 ${mid - 1} 42 ${mid + 5} 52`} fill="none" stroke="var(--bone-dim)" strokeWidth="0.9" strokeLinecap="round" />
-        <path d={`M${left + 6} 27 C${left} 39 ${left + 1} 49 ${left + 10} 61`} fill="none" stroke="var(--bone-dim)" strokeWidth="0.9" strokeLinecap="round" />
-        <ellipse cx={left + 14} cy="68" rx="15" ry="8" fill="none" stroke="var(--bone-dim)" strokeWidth="1" transform={`rotate(${tilt} ${left + 14} 68)`} />
-        <circle cx={mid + 8} cy="58" r="6.5" fill="var(--calder)" opacity="0.55" />
+        <path d={`M${left} 28 C${mid} 14 ${right} 16 88 27`} fill="none" stroke="var(--bone-dim)" strokeWidth="1.1" strokeDasharray="4 5" strokeLinecap="round" />
+        <path d={`M13 39 C${mid - 10} 36 ${mid + 2} 48 44 63`} fill="none" stroke="var(--calder)" strokeWidth="0.9" strokeLinecap="round" />
+        <path d={`M26 74 C${mid + 8} 48 ${right + 3} 53 82 60`} fill="none" stroke="var(--calder-blue)" strokeWidth="0.9" strokeLinecap="round" />
+        <path d={`M42 63 C${mid + 20} 68 ${right + 1} 67 77 60`} fill="none" stroke="var(--bone)" strokeWidth="0.8" opacity="0.75" strokeLinecap="round" />
+        <circle cx="13" cy="39" r="8.5" fill="var(--calder)" opacity="0.8" />
+        <circle cx="26" cy="74" r="8" fill="var(--calder-blue)" opacity="0.8" />
+        <circle cx="82" cy="60" r="8.5" fill="var(--bone)" opacity="0.85" />
       </svg>
       <span className="font-display relative text-2xl font-bold text-[var(--bone-dim)]/70">{initialFor(item)}</span>
     </div>
@@ -953,10 +957,7 @@ export default function Home() {
       <Toast message={toast.message} actionLabel={toast.actionLabel} onAction={toast.onAction} />
       <header className="mb-8 flex items-start justify-between pt-1">
         <div>
-          <div className="flex items-center gap-3 text-[var(--bone)]">
-            <MobileMark className="h-10 w-[4.75rem] -translate-x-1" />
-            <p className="font-display text-[28px] font-bold leading-none text-[var(--bone)]">moeum</p>
-          </div>
+          <p className="font-display text-[30px] font-bold leading-none text-[var(--bone)]">moeum</p>
           <h1 className="type-title mt-5 text-[var(--bone)]">{title[tab]}</h1>
         </div>
         <button

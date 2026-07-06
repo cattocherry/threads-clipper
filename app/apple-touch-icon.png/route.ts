@@ -63,6 +63,33 @@ function drawIcon() {
     }
   }
 
+  function cubic(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    x3: number,
+    y3: number,
+    thickness: number,
+    color: [number, number, number, number],
+    dashed = false
+  ) {
+    let previous: [number, number] | null = null;
+    for (let step = 0; step <= 96; step += 1) {
+      const t = step / 96;
+      const u = 1 - t;
+      const x = u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3;
+      const y = u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3;
+      const next: [number, number] = [Math.round(x), Math.round(y)];
+      if (previous && (!dashed || Math.floor(step / 8) % 2 === 0)) {
+        line(previous[0], previous[1], next[0], next[1], thickness, color);
+      }
+      previous = next;
+    }
+  }
+
   function ellipse(
     cx: number,
     cy: number,
@@ -91,17 +118,18 @@ function drawIcon() {
   }
 
   fillRect(0, 0, SIZE, SIZE, [20, 21, 24, 255]);
-  line(37, 69, 73, 57, 3, [242, 241, 237, 255]);
-  line(73, 57, 112, 57, 3, [242, 241, 237, 255]);
-  line(112, 57, 146, 70, 3, [242, 241, 237, 255]);
-  line(88, 52, 101, 105, 2, [139, 142, 148, 255]);
-  line(56, 65, 47, 116, 2, [139, 142, 148, 255]);
-  line(132, 70, 146, 126, 2, [139, 142, 148, 255]);
-  line(37, 120, 83, 128, 2, [139, 142, 148, 255]);
-  line(123, 131, 168, 138, 2, [139, 142, 148, 255]);
-  fillCircle(103, 109, 11, [245, 197, 24, 255]);
-  ellipse(47, 124, 24, 13, -13, 2, [242, 241, 237, 255]);
-  ellipse(150, 139, 30, 16, 9, 2, [139, 142, 148, 255]);
+  cubic(69, 51, 99, 31, 136, 28, 170, 42, 3, [139, 142, 148, 255], true);
+  cubic(29, 52, 55, 52, 74, 62, 88, 78, 3, [245, 197, 24, 255]);
+  cubic(61, 115, 91, 89, 125, 84, 152, 97, 3, [61, 79, 153, 255]);
+  cubic(92, 88, 112, 97, 134, 96, 150, 90, 2, [242, 241, 237, 255]);
+  line(87, 78, 107, 102, 2, [139, 142, 148, 255]);
+  line(150, 90, 126, 137, 2, [139, 142, 148, 255]);
+  fillCircle(29, 52, 20, [245, 197, 24, 255]);
+  fillCircle(61, 115, 19, [61, 79, 153, 255]);
+  fillCircle(152, 97, 21, [242, 241, 237, 255]);
+  ellipse(88, 78, 5, 5, 0, 2, [242, 241, 237, 255]);
+  ellipse(107, 102, 5, 5, 0, 2, [242, 241, 237, 255]);
+  ellipse(150, 90, 5, 5, 0, 2, [242, 241, 237, 255]);
 
   return data;
 }

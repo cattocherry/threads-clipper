@@ -20,15 +20,6 @@ const USER_AGENTS = [
   }
 ];
 
-interface DebugStep {
-  step: string;
-  status?: number;
-  finalUrl?: string;
-  htmlStart?: string;
-  title?: string;
-  description?: string;
-}
-
 function decodeHtml(value: string) {
   return value
     .replace(/&amp;/g, "&")
@@ -187,15 +178,7 @@ async function fetchHtml(url: URL, userAgent: string) {
   }
 }
 
-function json(body: Record<string, unknown>, debug: boolean, steps: DebugStep[]) {
-  return NextResponse.json(debug ? { ...body, debug: steps } : body);
-}
-
 export async function POST(request: Request) {
-  const steps: DebugStep[] = [];
-  const requestUrl = new URL(request.url);
-  const debug = requestUrl.searchParams.get("debug") === "1";
-
   try {
     const body = (await request.json()) as { url?: string };
     const normalized = normalizeUrl(body.url ?? "");
@@ -204,28 +187,16 @@ export async function POST(request: Request) {
       try {
         const { response, html } = await fetchHtml(normalized, userAgent.value);
         const parsed = ogResult(html, normalized);
-        steps.push({
-          step: `og:${userAgent.label}`,
-          status: response.status,
-          finalUrl: response.url,
-          htmlStart: html.slice(0, 500),
-          title: parsed.title,
-          description: parsed.previewText
-        });
         if (parsed.description && !response.url.includes("error=invalid_post")) {
-          return json(
-            {
-              author: parsed.author,
-              authorName: parsed.authorName,
-              previewText: parsed.previewText,
-              thumbnail: parsed.thumbnail
-            },
-            debug,
-            steps
-          );
+          return NextResponse.json({
+            author: parsed.author,
+            authorName: parsed.authorName,
+            previewText: parsed.previewText,
+            thumbnail: parsed.thumbnail
+          });
         }
       } catch (error) {
-        steps.push({ step: `og:${userAgent.label}:error`, description: error instanceof Error ? error.message : "unknown" });
+        // Try the next user agent before falling back to the embed endpoint.
       }
     }
 
@@ -234,36 +205,24 @@ export async function POST(request: Request) {
       try {
         const { response, html } = await fetchHtml(embed, userAgent.value);
         const parsed = embedResult(html, normalized);
-        steps.push({
-          step: `embed:${userAgent.label}`,
-          status: response.status,
-          finalUrl: response.url,
-          htmlStart: html.slice(0, 500),
-          title: parsed.title,
-          description: parsed.previewText
-        });
         if ((parsed.previewText || parsed.author) && !response.url.includes("error=invalid_post")) {
-          return json(
-            {
-              author: parsed.author,
-              authorName: parsed.authorName,
-              previewText: parsed.previewText,
-              thumbnail: parsed.thumbnail
-            },
-            debug,
-            steps
-          );
+          return NextResponse.json({
+            author: parsed.author,
+            authorName: parsed.authorName,
+            previewText: parsed.previewText,
+            thumbnail: parsed.thumbnail
+          });
         }
       } catch (error) {
-        steps.push({ step: `embed:${userAgent.label}:error`, description: error instanceof Error ? error.message : "unknown" });
+        // Keep saving resilient even when Threads blocks or reshapes a response.
       }
     }
 
-    return json({ author: "", authorName: "", previewText: "", thumbnail: "" }, debug, steps);
+    return NextResponse.json({ author: "", authorName: "", previewText: "", thumbnail: "" });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_HOST") {
       return NextResponse.json({ error: "Threads 링크만 저장할 수 있어요." }, { status: 400 });
     }
-    return json({ author: "", authorName: "", previewText: "", thumbnail: "" }, debug, steps);
+    return NextResponse.json({ author: "", authorName: "", previewText: "", thumbnail: "" });
   }
 }

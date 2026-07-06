@@ -189,12 +189,12 @@ function Card({
               stop(event);
               onStatus?.(item);
             }}
-            className="inline-flex h-8 items-center gap-2 rounded-full border border-zinc-800 px-3 text-xs text-zinc-300"
+            className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-zinc-800 px-3 text-xs text-zinc-300"
           >
             <span className={`h-2 w-2 rounded-full ${STATUS_DOT[item.status]}`} />
             {STATUS_LABEL[item.status]}
           </button>
-          <span className="text-xs text-zinc-600">{staleLabel ?? formatDate(item.savedAt)}</span>
+          <span className="min-w-0 truncate text-right text-xs text-zinc-600">{staleLabel ?? formatDate(item.savedAt)}</span>
         </div>
       </div>
     </article>
@@ -424,18 +424,19 @@ function Inbox({ tags, onToast, onOpen }: { tags: TagMeta[]; onToast: (message: 
         body: JSON.stringify({ url: clean })
       });
       const og = (await ogResponse.json()) as Partial<ArchiveItem>;
+      const previewText = og.previewText ?? "";
       await updateItem(item.id, {
         author: og.author ?? "",
         authorName: og.authorName,
-        previewText: og.previewText ?? "",
+        previewText,
         thumbnail: og.thumbnail
       });
-      const text = og.previewText ?? "";
-      if (text) {
+      if (previewText) {
+        const existingTags = (await getAllTags()).map((tag) => tag.name);
         const tagResponse = await fetch("/api/suggest-tags", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text, existingTags: tags.map((tag) => tag.name) })
+          body: JSON.stringify({ text: previewText, existingTags })
         });
         const data = (await tagResponse.json()) as { tags?: string[] };
         setSuggestions((current) => ({ ...current, [item.id]: data.tags ?? [] }));
@@ -465,6 +466,11 @@ function Inbox({ tags, onToast, onOpen }: { tags: TagMeta[]; onToast: (message: 
           <input
             value={url}
             onChange={(event) => setUrl(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+              event.preventDefault();
+              void saveUrl();
+            }}
             onPaste={(event) => {
               const pasted = event.clipboardData.getData("text");
               if (isThreadsUrl(pasted)) {
@@ -472,6 +478,8 @@ function Inbox({ tags, onToast, onOpen }: { tags: TagMeta[]; onToast: (message: 
                 void saveUrl(pasted);
               }
             }}
+            enterKeyHint="go"
+            inputMode="url"
             placeholder="Threads 링크 붙여넣기"
             className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-3 text-sm outline-none focus:border-blue-400"
           />

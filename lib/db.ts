@@ -6,6 +6,7 @@ export class RethreadDB extends Dexie {
   tagMeta!: Table<TagMeta, string>;
 
   constructor() {
+    // Keep the original database name so existing local archives remain visible after the moeum rebrand.
     super("rethread-db");
     this.version(1).stores({
       items: "id, savedAt, status, isClassified, isFavorite, *tags",

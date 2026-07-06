@@ -242,7 +242,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ author: "", authorName: "", previewText: "", thumbnail: "" });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_HOST") {
-      return NextResponse.json({ error: "Threads 링크만 저장할 수 있어요." }, { status: 400 });
+      return NextResponse.json({ error: "지원하는 링크만 저장할 수 있어요." }, { status: 400 });
     }
     return NextResponse.json({ author: "", authorName: "", previewText: "", thumbnail: "" });
   }

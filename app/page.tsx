@@ -92,31 +92,38 @@ function initialFor(item: ArchiveItem) {
 
 function MobileMark({ animated = false, className = "" }: { animated?: boolean; className?: string }) {
   return (
-    <svg className={`${animated ? "mobile-balance" : ""} ${className}`} viewBox="0 0 160 96" aria-hidden="true">
-      <path d="M18 20h124M80 20v25M42 20v46M122 20v53" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="80" cy="52" r="11" fill="var(--calder)" />
-      <circle cx="42" cy="72" r="15" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="122" cy="78" r="18" fill="none" stroke="var(--bone-dim)" strokeWidth="2.5" />
+    <svg className={`${animated ? "mobile-balance" : ""} ${className}`} viewBox="0 0 188 112" aria-hidden="true">
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M24 34c37-18 78-19 138 1" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M92 25c-3 18 1 34 12 48" stroke="var(--bone-dim)" strokeWidth="1.1" />
+        <path d="M50 30c-11 16-14 31-9 46" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M145 36c10 13 14 27 11 43" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M38 76c13-7 28-6 43 3" stroke="var(--bone-dim)" strokeWidth="1.2" />
+        <path d="M123 80c17-8 33-7 48 4" stroke="var(--bone-dim)" strokeWidth="1.2" />
+      </g>
+      <circle cx="104" cy="76" r="8.5" fill="var(--calder)" />
+      <ellipse cx="42" cy="83" rx="17" ry="10" fill="none" stroke="currentColor" strokeWidth="1.4" transform="rotate(-13 42 83)" />
+      <ellipse cx="158" cy="88" rx="24" ry="13" fill="none" stroke="var(--bone-dim)" strokeWidth="1.4" transform="rotate(9 158 88)" />
     </svg>
   );
 }
 
 function ThumbnailFallback({ item }: { item: ArchiveItem }) {
   const hash = hashString(item.author || item.url);
-  const a = 20 + (hash % 30);
-  const b = 54 + ((hash >> 3) % 28);
-  const c = 26 + ((hash >> 5) % 18);
+  const left = 12 + (hash % 18);
+  const mid = 36 + ((hash >> 3) % 16);
+  const right = 62 + ((hash >> 6) % 18);
+  const tilt = (hash % 19) - 9;
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--graphite-700)]">
-      <span
-        className="absolute rounded-full border border-[var(--bone-dim)] opacity-60"
-        style={{ width: `${c + 22}px`, height: `${c + 22}px`, left: `${a - 12}px`, top: `${b - 24}px` }}
-      />
-      <span
-        className="absolute rounded-full bg-[var(--calder)] opacity-20"
-        style={{ width: `${c}px`, height: `${c}px`, right: `${a - 10}px`, top: `${22 + (hash % 22)}px` }}
-      />
-      <span className="font-display text-3xl font-bold text-[var(--bone-dim)]">{initialFor(item)}</span>
+      <svg className="absolute inset-0 h-full w-full opacity-85" viewBox="0 0 96 96" aria-hidden="true">
+        <path d={`M${left} 24 C${mid} 13 ${right} 18 86 29`} fill="none" stroke="var(--bone-dim)" strokeWidth="1.2" strokeLinecap="round" />
+        <path d={`M${mid} 22 C${mid - 5} 34 ${mid - 1} 42 ${mid + 5} 52`} fill="none" stroke="var(--bone-dim)" strokeWidth="0.9" strokeLinecap="round" />
+        <path d={`M${left + 6} 27 C${left} 39 ${left + 1} 49 ${left + 10} 61`} fill="none" stroke="var(--bone-dim)" strokeWidth="0.9" strokeLinecap="round" />
+        <ellipse cx={left + 14} cy="68" rx="15" ry="8" fill="none" stroke="var(--bone-dim)" strokeWidth="1" transform={`rotate(${tilt} ${left + 14} 68)`} />
+        <circle cx={mid + 8} cy="58" r="6.5" fill="var(--calder)" opacity="0.55" />
+      </svg>
+      <span className="font-display relative text-2xl font-bold text-[var(--bone-dim)]/70">{initialFor(item)}</span>
     </div>
   );
 }
@@ -175,10 +182,10 @@ function Toast({
 
 function Empty({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[14px] border border-dashed border-[var(--graphite-700)] bg-[var(--graphite-800)] p-7 text-center">
-      <MobileMark animated className="mx-auto mb-4 h-20 w-32 text-[var(--bone)]" />
+    <div className="py-14 text-center">
+      <MobileMark animated className="mx-auto mb-8 h-28 w-48 text-[var(--bone)] opacity-90" />
       <p className="text-sm font-semibold text-[var(--bone)]">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[var(--bone-dim)]">{body}</p>
+      <p className="mx-auto mt-2 max-w-64 text-sm leading-6 text-[var(--bone-dim)]">{body}</p>
     </div>
   );
 }
@@ -944,13 +951,13 @@ export default function Home() {
   return (
     <main className="mx-auto min-h-screen max-w-lg px-4 pb-24 pt-5">
       <Toast message={toast.message} actionLabel={toast.actionLabel} onAction={toast.onAction} />
-      <header className="mb-5 flex items-center justify-between">
+      <header className="mb-8 flex items-start justify-between pt-1">
         <div>
-          <div className="flex items-center gap-2 text-[var(--bone)]">
-            <MobileMark className="h-8 w-12" />
-            <p className="font-display text-2xl font-bold text-[var(--bone)]">moeum</p>
+          <div className="flex items-center gap-3 text-[var(--bone)]">
+            <MobileMark className="h-10 w-[4.75rem] -translate-x-1" />
+            <p className="font-display text-[28px] font-bold leading-none text-[var(--bone)]">moeum</p>
           </div>
-          <h1 className="type-title mt-2 text-[var(--bone)]">{title[tab]}</h1>
+          <h1 className="type-title mt-5 text-[var(--bone)]">{title[tab]}</h1>
         </div>
         <button
           type="button"

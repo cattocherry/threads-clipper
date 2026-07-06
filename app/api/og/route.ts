@@ -69,9 +69,22 @@ function metaTags(html: string) {
   return result;
 }
 
+function handleFromUrl(url: URL) {
+  const handle = url.pathname.match(/\/@([^/]+)/)?.[1];
+  return handle ? `@${decodeURIComponent(handle).replace(/^@/, "")}` : "";
+}
+
+function cleanAuthorName(value: string, handle = "") {
+  const withoutHandle = value.replace(/\s*\(@[^)]+\)\s*/g, " ").replace(/\s+/g, " ").trim();
+  if (!handle) return withoutHandle;
+  return withoutHandle.replace(new RegExp(`^${handle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"), "").trim();
+}
+
 function parseAuthor(title: string, url: URL) {
+  const fallbackHandle = handleFromUrl(url);
   const titlePatterns = [
-    /^(.*?)\s+\(@([^)]+)\)\s+(?:on|님이 Threads에 게시)/i,
+    /^(.*?)\s+\(@([^)]+)\)\s+on Threads:?/i,
+    /^(.*?)\s+\(@([^)]+)\)\s+님이 Threads에 게시/i,
     /^Threads(?:의|에서)\s+(.*?)\(@([^)]+)\)님/i,
     /^(.+?)\s+on Threads:\s*["“]/i,
     /^@?([A-Za-z0-9._]+)\s+on Threads/i
@@ -80,13 +93,16 @@ function parseAuthor(title: string, url: URL) {
     const match = title.match(pattern);
     if (!match) continue;
     if (match[2]) {
-      return { authorName: match[1].trim(), author: `@${match[2].trim().replace(/^@/, "")}` };
+      const author = `@${match[2].trim().replace(/^@/, "")}`;
+      return { authorName: cleanAuthorName(match[1], author), author };
     }
     const value = match[1].trim();
-    return { authorName: value.startsWith("@") ? "" : value, author: value.startsWith("@") ? value : "" };
+    return {
+      authorName: value.startsWith("@") ? "" : cleanAuthorName(value, fallbackHandle),
+      author: value.startsWith("@") ? value : fallbackHandle
+    };
   }
-  const handle = url.pathname.match(/\/@([^/]+)/)?.[1];
-  return { authorName: "", author: handle ? `@${decodeURIComponent(handle)}` : "" };
+  return { authorName: "", author: fallbackHandle };
 }
 
 function ogResult(html: string, url: URL) {
@@ -98,17 +114,19 @@ function ogResult(html: string, url: URL) {
   return {
     author: author.author,
     authorName: author.authorName,
-    previewText: description || title,
+    previewText: description,
     thumbnail: image,
     title,
     description
   };
 }
 
-function embedUrl(url: URL) {
+function embedUrls(url: URL) {
   const next = new URL(url.toString());
   next.pathname = next.pathname.replace(/\/$/, "") + "/embed";
-  return next;
+  const noscript = new URL(next.toString());
+  noscript.searchParams.set("_fb_noscript", "1");
+  return [next, noscript];
 }
 
 function extractJsonStrings(html: string) {
@@ -127,18 +145,20 @@ function extractJsonStrings(html: string) {
 function embedResult(html: string, url: URL) {
   const meta = ogResult(html, url);
   const strings = extractJsonStrings(html);
-  const handleFromUrl = url.pathname.match(/\/@([^/]+)/)?.[1];
   const handle =
     strings.find((value) => /^@[A-Za-z0-9._]{2,}$/.test(value)) ||
-    (handleFromUrl ? `@${decodeURIComponent(handleFromUrl)}` : "");
+    handleFromUrl(url);
+  const textContainer = html.match(/<span[^>]*class=["'][^"']*TextContentContainer[^"']*["'][^>]*>([\s\S]*?)<\/span><div[^>]*class=["'][^"']*ActionBarContainer/i)?.[1];
   const text =
-    meta.previewText ||
+    meta.description ||
+    (textContainer ? stripTags(textContainer) : "") ||
     strings
       .filter((value) => {
         const clean = value.trim();
         return (
           clean.length >= 12 &&
           clean.length <= 1000 &&
+          clean !== meta.title &&
           !clean.startsWith("http") &&
           !/^[Mm]\d+[\d.,A-Za-z\s-]+[Zz]$/.test(clean) &&
           !clean.includes("__bbox") &&
@@ -200,21 +220,22 @@ export async function POST(request: Request) {
       }
     }
 
-    const embed = embedUrl(normalized);
-    for (const userAgent of USER_AGENTS) {
-      try {
-        const { response, html } = await fetchHtml(embed, userAgent.value);
-        const parsed = embedResult(html, normalized);
-        if ((parsed.previewText || parsed.author) && !response.url.includes("error=invalid_post")) {
-          return NextResponse.json({
-            author: parsed.author,
-            authorName: parsed.authorName,
-            previewText: parsed.previewText,
-            thumbnail: parsed.thumbnail
-          });
+    for (const embed of embedUrls(normalized)) {
+      for (const userAgent of USER_AGENTS) {
+        try {
+          const { response, html } = await fetchHtml(embed, userAgent.value);
+          const parsed = embedResult(html, normalized);
+          if ((parsed.previewText || parsed.author) && !response.url.includes("error=invalid_post")) {
+            return NextResponse.json({
+              author: parsed.author,
+              authorName: parsed.authorName,
+              previewText: parsed.previewText,
+              thumbnail: parsed.thumbnail
+            });
+          }
+        } catch (error) {
+          // Keep saving resilient even when Threads blocks or reshapes a response.
         }
-      } catch (error) {
-        // Keep saving resilient even when Threads blocks or reshapes a response.
       }
     }
 
